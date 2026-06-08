@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkPunks NFT | Mint & Burn</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #0d0d0d;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .marquee-container {
+            background: #ffffff;
+            color: #000000;
+            overflow: hidden;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            height: 36px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 2px solid #ffffff;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+
+        .punk-border {
+            border: 2px solid #262626;
+            transition: all 0.3s ease;
+        }
+
+        .punk-border:hover {
+            border-color: #ffffff;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d0d0d;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ffffff;
+        }
+
+        /* Modal Wallet Selection Styling */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .stamp-minted {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background: rgba(0, 0, 0, 0.85);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="custom-scrollbar">
+
+    <div class="marquee-container text-sm">
+        <div class="marquee-text">
+            ⚡ 1ST NFT FREE MINT IS LIVE NOW • MINT YOUR DARKPUNK FOR FREE BEFORE SUPPLY CROSSES 8,888 • NEXT MINTS ONLY 0.00022 ETH • ⚡ 1ST NFT FREE MINT IS LIVE NOW • MINT YOUR DARKPUNK FOR FREE BEFORE SUPPLY CROSSES 8,888 • NEXT MINTS ONLY 0.00022 ETH • 
+        </div>
+    </div>
+
+    <header class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center border-b border-neutral-900 sticky top-0 bg-[#0d0d0d]/90 backdrop-blur-md z-40">
+        <div class="flex items-center gap-8">
+            <h1 class="text-2xl font-bold tracking-tighter text-white hover:line-through cursor-pointer">DARKPUNKS</h1>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-400">
+                <a href="#mint-section" class="hover:text-white transition-colors">Mint</a>
+                <a href="#burn-section" class="hover:text-white transition-colors">Burn System</a>
+                <a href="#gallery-section" class="hover:text-white transition-colors">Traits & Gallery</a>
+                <a href="#roadmap-section" class="hover:text-white transition-colors">Roadmap</a>
+            </nav>
+        </div>
+        <div>
+            <button id="walletBtn" onclick="openWalletModal()" class="bg-white text-black text-sm font-bold px-4 py-2 rounded-none border border-white hover:bg-black hover:text-white transition-all tracking-tight">
+                Connect Wallet
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-12 space-y-24">
+
+        <div id="statusBroadcast" class="hidden fixed bottom-6 right-6 z-50 max-w-sm bg-neutral-900 border border-neutral-800 p-4 shadow-2xl">
+            <div class="flex flex-col gap-1">
+                <span id="broadcastTitle" class="text-xs uppercase tracking-wider text-neutral-500 font-bold">System Broadcast</span>
+                <p id="broadcastMsg" class="text-sm font-medium text-white"></p>
+                <span id="broadcastSubText" class="text-[11px] text-neutral-400 mt-1"></span>
+            </div>
+        </div>
+
+        <section id="mint-section" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center pt-6">
+            <div class="lg:col-span-7 space-y-6">
+                <div class="inline-block bg-neutral-900 border border-neutral-800 px-3 py-1 text-xs text-neutral-400 rounded-none uppercase tracking-widest">
+                    Live Collection Minting
+                </div>
+                <h2 class="text-5xl md:text-7xl font-bold tracking-tight leading-none text-white">
+                    1ST NFT <br><span class="text-neutral-500">FREE MINT</span>
+                </h2>
+                <p class="text-neutral-400 text-base max-w-xl leading-relaxed">
+                    DarkPunks are 10,000 algorithmic punk characters stored securely on-chain. Your first token mint from each individual crypto wallet is completely free of charge (+ network gas) during the initial 8,888 threshold.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 max-w-md">
+                    <div class="bg-neutral-950 p-4 border border-neutral-900">
+                        <span class="text-xs text-neutral-500 uppercase block mb-1">Current Mint Progress</span>
+                        <span id="liveSupplyCount" class="text-2xl font-bold text-white">--- / 10000</span>
+                    </div>
+                    <div class="bg-neutral-950 p-4 border border-neutral-900">
+                        <span class="text-xs text-neutral-500 uppercase block mb-1">Pricing Configuration</span>
+                        <span id="dynamicPriceLabel" class="text-2xl font-bold text-white">0.00022 ETH</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch gap-3 max-w-md pt-2">
+                    <div class="flex border border-neutral-800 bg-neutral-950">
+                        <button onclick="adjustQuantity(-1)" class="px-4 py-2 hover:bg-neutral-900 text-xl font-bold text-neutral-400 transition-colors">-</button>
+                        <input id="mintQty" type="number" value="1" min="1" max="20" readonly class="w-16 text-center bg-transparent font-bold text-lg focus:outline-none text-white">
+                        <button onclick="adjustQuantity(1)" class="px-4 py-2 hover:bg-neutral-900 text-xl font-bold text-neutral-400 transition-colors">+</button>
+                    </div>
+                    <button onclick="executePublicMint()" class="flex-1 bg-white text-black font-bold px-6 py-3 text-base tracking-tight hover:bg-black hover:text-white hover:border-white border border-transparent transition-all">
+                        Mint DarkPunk Now
+                    </button>
+                </div>
+
+                <div id="userInventoryArea" class="space-y-3 pt-6 hidden">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Your Freshly Minted Punks</h4>
+                    <div id="userInventoryGrid" class="flex flex-wrap gap-3 max-h-24 overflow-y-auto p-1 custom-scrollbar">
+                        </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 flex justify-center">
+                <div class="w-full max-w-sm bg-neutral-950 p-4 border border-neutral-900 punk-border relative">
+                    <img id="previewDisplayImg" src="https://raw.githubusercontent.com/darkpunksnft/darkpunksimages/main/images/1.png" alt="Featured DarkPunk Artwork Showcase" class="w-full aspect-square object-cover grayscale brightness-90">
+                    <div class="mt-4 flex justify-between items-center text-xs text-neutral-400">
+                        <span id="previewName">DarkPunk #0001</span>
+                        <span class="text-neutral-600">Generated Specimen</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-neutral-950">
+
+        <section id="search-section" class="space-y-8 bg-neutral-950 p-8 border border-neutral-900">
+            <div class="max-w-xl space-y-2">
+                <h3 class="text-2xl font-bold tracking-tight text-white">On-chain Verification Search</h3>
+                <p class="text-sm text-neutral-400">
+                    Every asset attributes and traits structure mapping matches symmetrically with the classic CryptoPunks alignment guidelines. Input any Token ID below to verify its asset state directly via GitHub storage networks.
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 max-w-xl">
+                <input id="searchInput" type="number" placeholder="Enter Token ID (0 - 9999)" min="0" max="9999" class="flex-1 bg-neutral-900 border border-neutral-800 px-4 py-3 text-sm focus:outline-none focus:border-neutral-600 text-white rounded-none">
+                <button onclick="executeVerificationSearch()" class="bg-neutral-800 text-white font-bold text-sm px-6 py-3 hover:bg-white hover:text-black transition-all">
+                    Search Registry
+                </button>
+            </div>
+
+            <div id="searchOutcomeBox" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-900 items-center">
+                <div class="max-w-[180px] bg-neutral-900 p-2 border border-neutral-800">
+                    <img id="searchResultImg" src="" alt="Verified Asset Image Mapping Preview" class="w-full aspect-square object-cover">
+                </div>
+                <div class="md:col-span-2 space-y-2">
+                    <h4 id="searchResultName" class="text-xl font-bold text-white">---</h4>
+                    <p class="text-xs text-neutral-400 max-w-md">
+                        This digital asset matches structural composition with original collection metadata registers. Hosted via decentralized backup structures.
+                    </p>
+                    <div id="searchTraitsList" class="flex flex-wrap gap-2 pt-1">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-neutral-950">
+
+        <section id="burn-section" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div class="lg:col-span-5 order-last lg:order-first">
+                <div class="bg-neutral-950 p-6 border border-neutral-900 space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-xs uppercase tracking-wider text-neutral-500 font-bold block">Sacrifice Target Entry</label>
+                        <input id="burnTargetId" type="number" placeholder="Target Token ID" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-600">
+                    </div>
+                    <button onclick="executeAssetSacrifice()" class="w-full bg-white text-black font-bold text-sm py-3 hover:bg-red-600 hover:text-white transition-all">
+                        Permanently Burn Asset
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 space-y-6">
+                <div class="inline-block bg-neutral-900 border border-neutral-800 px-3 py-1 text-xs text-neutral-400 rounded-none uppercase tracking-widest">
+                    Deflationary Protocol Mechanics
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white">
+                    Deflationary Sacrifice & <br><span class="text-neutral-500">$DARKPNK Emission</span>
+                </h2>
+                <p class="text-neutral-400 text-sm leading-relaxed max-w-xl">
+                    Sacrificing your DarkPunks assets activates the burn destruction protocol. Doing so reduces the collection maximum supply ceiling forever. Burn participants will be rewarded with utility allocation allocations of our upcoming <span class="font-bold text-white">$DARKPNK Token Layer</span>. Specific metrics regarding allocation distribution matrices will be updated via official channels shortly.
+                </p>
+                <div class="p-4 bg-neutral-950 border border-neutral-900 inline-block">
+                    <span class="text-xs text-neutral-500 uppercase block mb-1">Your Future Token Accumulation Balance Estimate</span>
+                    <span class="text-2xl font-bold tracking-widest text-neutral-400 blur-[4px] select-none">888.8888</span>
+                </div>
+
+                <div id="burnedHistoryLogBox" class="space-y-2 hidden">
+                    <h5 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Your Account Burn Log History</h5>
+                    <div id="burnedItemsWrapper" class="flex flex-wrap gap-2">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-neutral-950">
+
+        <section id="gallery-section" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-bold tracking-tight text-white">Asset Inventory Index</h2>
+                    <p class="text-sm text-neutral-400 max-w-xl">
+                        Click on any individual digital asset cell frame to load its detailed structural component specifications and on-chain traits composition mapping metadata matrix.
+                    </p>
+                </div>
+                <div class="text-xs text-neutral-500">
+                    Showing indexing sequence blocks (0 - 23)
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4" id="galleryAssetGrid">
+                </div>
+
+            <div id="inspectDataModal" class="hidden bg-neutral-950 p-6 border border-neutral-900 grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+                <div class="max-w-[140px] mx-auto md:mx-0 bg-neutral-900 p-2 border border-neutral-800">
+                    <img id="inspectModalImg" src="" alt="Target Inspector Asset Preview" class="w-full aspect-square object-cover">
+                </div>
+                <div class="md:col-span-3 space-y-3">
+                    <h4 id="inspectModalTitle" class="text-xl font-bold text-white">---</h4>
+                    <div id="inspectAttributesBox" class="flex flex-wrap gap-2">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="border-neutral-950">
+
+        <section id="roadmap-section" class="space-y-12">
+            <div class="space-y-2">
+                <h2 class="text-3xl font-bold tracking-tight text-white">Project Operational Roadmap</h2>
+                <p class="text-sm text-neutral-400 max-w-xl">
+                    Our structural development strategy benchmarks. Execution sequences trigger organically based upon core community integration states.
+                </p>
+            </div>
+
+            <div class="relative border-l border-neutral-900 ml-4 space-y-12 max-w-3xl">
+                <div class="relative pl-8">
+                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-white"></div>
+                    <span class="text-xs text-neutral-500 uppercase tracking-widest font-bold">Phase 01</span>
+                    <h4 class="text-lg font-bold text-white mt-1">Smart Contract Security Deployment</h4>
+                    <p class="text-neutral-400 text-sm mt-1">
+                        Deployment of the core gas-optimized ERC-721 contract mechanism onto Ethereum Mainnet layers. Verification registers completed.
+                    </p>
+                </div>
+
+                <div class="relative pl-8">
+                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-neutral-700"></div>
+                    <span class="text-xs text-neutral-500 uppercase tracking-widest font-bold">Phase 02</span>
+                    <h4 class="text-lg font-bold text-white mt-1">Decentralized Asset Distribution & Mint</h4>
+                    <p class="text-neutral-400 text-sm mt-1">
+                        Launch of the public distribution platform with 8,888 free mint reservation allotments allocated directly for community members.
+                    </p>
+                </div>
+
+                <div class="relative pl-8">
+                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-neutral-700"></div>
+                    <span class="text-xs text-neutral-500 uppercase tracking-widest font-bold">Phase 03</span>
+                    <h4 class="text-lg font-bold text-white mt-1">Automated Secondary Market Analytics X Bot</h4>
+                    <p class="text-neutral-400 text-sm mt-1">
+                        Integration tracking protocols to dispatch instant secondary sales alerts to our official X social channel automatically upon mint closure.
+                    </p>
+                </div>
+
+                <div class="relative pl-8">
+                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-neutral-700"></div>
+                    <span class="text-xs text-neutral-500 uppercase tracking-widest font-bold">Phase 04</span>
+                    <h4 class="text-lg font-bold text-white mt-1">Deflationary Mechanism & $DARKPNK Token Layer</h4>
+                    <p class="text-neutral-400 text-sm mt-1">
+                        Activation of token claim distribution registries for users recorded inside the deflationary burn history ledger.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="walletSelectionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onclick="closeWalletModal()">
+        <div class="bg-neutral-950 border border-neutral-800 p-6 w-full max-w-sm space-y-4" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center pb-2 border-b border-neutral-900">
+                <h3 class="text-sm uppercase font-bold tracking-wider text-white">Select Access Provider</h3>
+                <button onclick="closeWalletModal()" class="text-neutral-500 hover:text-white text-xs">✕</button>
+            </div>
+            
+            <div class="flex flex-col gap-2">
+                <button onclick="selectWalletProvider('metamask')" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-left text-sm font-bold text-white hover:bg-white hover:text-black transition-all flex justify-between items-center">
+                    <span>MetaMask Wallet</span>
+                    <span class="text-[10px] uppercase font-normal tracking-widest text-neutral-500">Injected</span>
+                </button>
+                <button onclick="selectWalletProvider('okx')" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-left text-sm font-bold text-white hover:bg-white hover:text-black transition-all flex justify-between items-center">
+                    <span>OKX Wallet</span>
+                    <span class="text-[10px] uppercase font-normal tracking-widest text-neutral-500">Extension</span>
+                </button>
+                <button onclick="selectWalletProvider('phantom')" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-left text-sm font-bold text-white hover:bg-white hover:text-black transition-all flex justify-between items-center">
+                    <span>Phantom Wallet</span>
+                    <span class="text-[10px] uppercase font-normal tracking-widest text-neutral-500">EVM Mode</span>
+                </button>
+                <button onclick="selectWalletProvider('keplr')" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-left text-sm font-bold text-white hover:bg-white hover:text-black transition-all flex justify-between items-center">
+                    <span>Keplr Wallet</span>
+                    <span class="text-[10px] uppercase font-normal tracking-widest text-neutral-500">EVM Layer</span>
+                </button>
+                <button onclick="selectWalletProvider('others')" class="w-full bg-neutral-900 border border-neutral-800 px-4 py-3 text-left text-sm font-bold text-white hover:bg-neutral-800 transition-all flex justify-between items-center">
+                    <span>Others Wallet Connections</span>
+                    <span class="text-[10px] uppercase font-normal tracking-widest text-neutral-500">Fallback</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="max-w-7xl mx-auto px-4 py-12 border-t border-neutral-950 flex flex-col sm:flex-row justify-between items-center gap-6 text-xs text-neutral-500">
+        <div>
+            © 2026 DarkPunks Core Network. All records finalized on-chain.
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="https://x.com/darkpunksnft" target="_blank" class="hover:text-white transition-colors">X Social</a>
+            <a href="https://opensea.io/assets/ethereum/0x0d9D02C88A8F23446471C11058e17E7DFA4F2AD0" target="_blank" class="hover:text-white transition-colors">OpenSea</a>
+            <a href="https://etherscan.io/address/0x0d9D02C88A8F23446471C11058e17E7DFA4F2AD0" target="_blank" class="hover:text-white transition-colors">Etherscan</a>
+        </div>
+    </footer>
+
+    <script>
+        // Global Infrastructure Setup & Parametric Constants Configuration
+        const CONTRACT_ADDRESS = "0x0d9D02C88A8F23446471C11058e17E7DFA4F2AD0";
+        const GITHUB_IMAGES_BASE = "https://raw.githubusercontent.com/darkpunksnft/darkpunksimages/main/images/";
+        
+        // Multi-layered fallback RPC cluster allocation configuration parameters
+        const ALCHEMY_FALLBACK_URLS = [
+            "https://eth-mainnet.g.alchemy.com/v2/fYKMDL9NELcMLpplFxENG",
+            "https://eth-mainnet.g.alchemy.com/v2/Jei0hdBnB76TsRhZsnx4e"
+        ];
+
+        // Complete Web3 Application State Records Configuration Ledger
+        let appState = {
+            userWalletAddress: null,
+            injectedSigner: null,
+            readOnlyProvider: null,
+            contractReadInstance: null,
+            contractWriteInstance: null,
+            currentTotalSupply: 0,
+            hasUsedFreeMint: false,
+            mintPricePerUnit: 0.00022
+        };
+
+        // Complete Contract Structural Application Binary Interface Mapping Registry
+        const CONTRACT_ABI = [
+            {"inputs":[{"internalType":"string","name":"initialBaseURI","type":"string"}],"stateMutability":"nonpayable","type":"constructor"},
+            {"inputs":[],"name":"MAX_SUPPLY","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"FREE_MINT_LIMIT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"MINT_PRICE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"walletFreeMinted","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"quantity","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"burn","outputs":[],"stateMutability":"nonpayable","type":"function"}
+        ];
+
+        // Initialization Logic Execution Entry Hooks
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeReadOnlyNetworkChannel();
+            generateDynamicGalleryFrames();
+            synchronizeLiveSupplyCounterMetrics();
+            loadLoggedLocalBurnLedgerRecords();
+            setInterval(synchronizeLiveSupplyCounterMetrics, 12000); // Polling update metrics loops
+        });
+
+        // Setup Read Only JSON-RPC Network Access Pipeline Connections
+        async function initializeReadOnlyNetworkChannel() {
+            for (let rpcUrl of ALCHEMY_FALLBACK_URLS) {
+                try {
+                    appState.readOnlyProvider = new ethers.JsonRpcProvider(rpcUrl);
+                    appState.contractReadInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, appState.readOnlyProvider);
+                    break;
+                } catch (connectionError) {
+                    console.warn("RPC route connection skipped. Relaying parameters...", connectionError);
+                }
+            }
+        }
+
+        // Broadcast Center Message Pipeline Logic Handler
+        function triggerSystemBroadcast(title, message, subtext = "") {
+            const el = document.getElementById("statusBroadcast");
+            document.getElementById("broadcastTitle").innerText = title;
+            document.getElementById("broadcastMsg").innerText = message;
+            document.getElementById("broadcastSubText").innerText = subtext;
+            el.classList.remove("hidden");
+            setTimeout(() => el.classList.add("hidden"), 7000);
+        }
+
+        // Sync Supply Metrics Parameters
+        async function synchronizeLiveSupplyCounterMetrics() {
+            if (!appState.contractReadInstance) return;
+            try {
+                const supply = await appState.contractReadInstance.totalSupply();
+                appState.currentTotalSupply = Number(supply);
+                document.getElementById("liveSupplyCount").innerText = `${appState.currentTotalSupply} / 10000`;
+                
+                // Read adjusted state rules to verify pricing metrics outputs updates
+                reevaluatePricingDisplayRules();
+                updateGalleryMintStampsVisibility();
+            } catch (err) {
+                console.error("Metric sync failure state recorded.", err);
+            }
+        }
+
+        // Reevaluate and Update Pricing Matrix Parameters on Front-end Interfaces
+        function reevaluatePricingDisplayRules() {
+            const qty = parseInt(document.getElementById("mintQty").value) || 1;
+            let finalPriceStr = "0.00022 ETH";
+            
+            if (appState.currentTotalSupply < 8888 && !appState.hasUsedFreeMint) {
+                if (qty === 1) {
+                    finalPriceStr = "FREE MINT";
+                } else {
+                    let chargeableUnits = qty - 1;
+                    let aggregateFee = chargeableUnits * appState.mintPricePerUnit;
+                    finalPriceStr = `${aggregateFee.toFixed(5)} ETH`;
+                }
+            } else {
+                let aggregateFee = qty * appState.mintPricePerUnit;
+                finalPriceStr = `${aggregateFee.toFixed(5)} ETH`;
+            }
+            document.getElementById("dynamicPriceLabel").innerText = finalPriceStr;
+        }
+
+        // Numeric Quantity Box Mutation Handlers
+        function adjustQuantity(direction) {
+            const input = document.getElementById("mintQty");
+            let newVal = parseInt(input.value) + direction;
+            if (newVal >= 1 && newVal <= 20) {
+                input.value = newVal;
+                reevaluatePricingDisplayRules();
+            }
+        }
+
+        // Wallet Modals Management Framework
+        function openWalletModal() {
+            document.getElementById("walletSelectionModal").classList.remove("hidden");
+        }
+        function closeWalletModal() {
+            document.getElementById("walletSelectionModal").classList.add("hidden");
+        }
+
+        // Select and Assign Active Provider Route Pipeline Connection Rules
+        async function selectWalletProvider(providerKey) {
+            closeWalletModal();
+            let providerInstance = null;
+
+            if (providerKey === 'metamask' && window.ethereum) {
+                if (window.ethereum.providers && window.ethereum.providers.length > 0) {
+                    providerInstance = window.ethereum.providers[0];
+                } else {
+                    providerInstance = window.ethereum;
+                }
+            } else if (providerKey === 'okx' && window.okxwallet) {
+                providerInstance = window.okxwallet;
+            } else if (providerKey === 'phantom' && window.phantom?.ethereum) {
+                providerInstance = window.phantom.ethereum;
+            } else if (providerKey === 'keplr' && window.keplr?.ethereum) {
+                providerInstance = window.keplr.ethereum;
+            } else if (providerKey === 'others' && window.ethereum) {
+                providerInstance = window.ethereum;
+            }
+
+            if (!providerInstance) {
+                triggerSystemBroadcast("Connection Failure", "Requested wallet extension interface was not found.", "Verify extension state.");
+                return;
+            }
+
+            try {
+                const browserProvider = new ethers.BrowserProvider(providerInstance);
+                const accounts = await browserProvider.send("eth_requestAccounts", []);
+                appState.userWalletAddress = accounts[0];
+                appState.injectedSigner = await browserProvider.getSigner();
+                
+                appState.contractWriteInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, appState.injectedSigner);
+                
+                // Reflect connected states inside tracking buttons interfaces
+                document.getElementById("walletBtn").innerText = `${appState.userWalletAddress.substring(0,6)}...${appState.userWalletAddress.substring(38)}`;
+                
+                // Sync verification tracking logs parameters
+                await checkUserFreeMintAllocationsLedger();
+                document.getElementById("userInventoryArea").classList.remove("hidden");
+                triggerSystemBroadcast("Wallet Connected", "Successfully attached secure network access layer.", appState.userWalletAddress);
+            } catch (authError) {
+                triggerSystemBroadcast("Authorization Canceled", "User dismissed link authorization parameter routes.", "Incomplete binding.");
+            }
+        }
+
+        // Query Smart Contract to Verify Free Mint Eligibility Parameters State
+        async function checkUserFreeMintAllocationsLedger() {
+            if (!appState.contractReadInstance || !appState.userWalletAddress) return;
+            try {
+                const recordedFreeClaims = await appState.contractReadInstance.walletFreeMinted(appState.userWalletAddress);
+                appState.hasUsedFreeMint = Number(recordedFreeClaims) > 0;
+                reevaluatePricingDisplayRules();
+            } catch (err) {
+                console.error("Free registry parsing failure.", err);
+            }
+        }
+
+        // Public Interaction Mint Execution Call Routine Function
+        async function executePublicMint() {
+            if (!appState.contractWriteInstance) {
+                openWalletModal();
+                return;
+            }
+
+            const qty = parseInt(document.getElementById("mintQty").value) || 1;
+            try {
+                triggerSystemBroadcast("Transaction Dispatch", "Processing mint parameters validation sequence...", "Metamask confirmation pending.");
+                
+                // Dynamic Fee Value Matrix Computations Setup
+                let dynamicValueWei = ethers.parseEther("0");
+                if (appState.currentTotalSupply < 8888 && !appState.hasUsedFreeMint) {
+                    if (qty > 1) {
+                        dynamicValueWei = ethers.parseEther(((qty - 1) * appState.mintPricePerUnit).toFixed(5));
+                    }
+                } else {
+                    dynamicValueWei = ethers.parseEther((qty * appState.mintPricePerUnit).toFixed(5));
+                }
+
+                const transactionResult = await appState.contractWriteInstance.mint(qty, { value: dynamicValueWei });
+                triggerSystemBroadcast("Pending Processing", "Broadcasting contract interaction onto block logs layer...", `Hash: ${transactionResult.hash.substring(0,12)}...`);
+                
+                await transactionResult.wait();
+                triggerSystemBroadcast("Execution Complete", `Successfully minted ${qty} DarkPunks structural assets.`, "Block confirmed.");
+                
+                // Track into local visualization blocks interfaces list
+                appendMintedItemsToInventoryDisplay(qty);
+                synchronizeLiveSupplyCounterMetrics();
+                await checkUserFreeMintAllocationsLedger();
+            } catch (mintErr) {
+                console.error(mintErr);
+                triggerSystemBroadcast("Transaction Aborted", "Verification pipeline rejected transaction parameters execution.", "Rejected payload.");
+            }
+        }
+
+        // Appends Newly Minted Items Instantly to the UI Tracking Drawer
+        function appendMintedItemsToInventoryDisplay(qty) {
+            const grid = document.getElementById("userInventoryGrid");
+            let baseStartId = appState.currentTotalSupply; 
+            
+            for (let i = 0; i < qty; i++) {
+                let targetId = baseStartId + i;
+                const imgNode = document.createElement("img");
+                imgNode.src = `${GITHUB_IMAGES_BASE}${targetId}.png`;
+                imgNode.className = "w-10 h-10 border border-neutral-800 object-cover bg-neutral-900";
+                imgNode.title = `DarkPunk #${targetId}`;
+                grid.appendChild(imgNode);
+            }
+        }
+
+        // Contract Sacrifice Destruction Endpoint Calls Function Logic Block
+        async function executeAssetSacrifice() {
+            if (!appState.contractWriteInstance) {
+                openWalletModal();
+                return;
+            }
+
+            const tokenIdInput = document.getElementById("burnTargetId").value;
+            if (tokenIdInput === "") return;
+            const targetId = parseInt(tokenIdInput);
+
+            try {
+                triggerSystemBroadcast("Destruction Request", "Queueing assets destruction burn directives protocol pipeline...", "Awaiting approval payload confirmation.");
+                const tx = await appState.contractWriteInstance.burn(targetId);
+                
+                triggerSystemBroadcast("Burning Active", "Purging asset identifier registers off-chain completely...", "Syncing ledger blocks.");
+                await tx.wait();
+                
+                triggerSystemBroadcast("Asset Sacrificed", `Token ID ${targetId} payload successfully incinerated.`, "Supply ceiling reduced.");
+                saveItemToLocalBurnedHistoryLedger(targetId);
+                synchronizeLiveSupplyCounterMetrics();
+            } catch (burnErr) {
+                triggerSystemBroadcast("Protocol Violation", "Burn execution rejected. Verify token ownership status values.", "Invalid target parameters.");
+            }
+        }
+
+        // Persistent Storage Tracking Layer System For Deflationary Records Log
+        function saveItemToLocalBurnedHistoryLedger(tokenId) {
+            let activeLog = JSON.parse(localStorage.getItem("darkpunks_burn_logs") || "[]");
+            if (!activeLog.includes(tokenId)) {
+                activeLog.push(tokenId);
+                localStorage.setItem("darkpunks_burn_logs", JSON.stringify(activeLog));
+            }
+            loadLoggedLocalBurnLedgerRecords();
+        }
+
+        function loadLoggedLocalBurnLedgerRecords() {
+            let activeLog = JSON.parse(localStorage.getItem("darkpunks_burn_logs") || "[]");
+            const box = document.getElementById("burnedHistoryLogBox");
+            const wrapper = document.getElementById("burnedItemsWrapper");
+            
+            if (activeLog.length === 0) {
+                box.classList.add("hidden");
+                return;
+            }
+            
+            box.classList.remove("hidden");
+            wrapper.innerHTML = "";
+            activeLog.forEach(id => {
+                const badge = document.createElement("span");
+                badge.className = "bg-neutral-900 border border-red-900/40 text-red-400 text-xs px-2 py-1 font-bold";
+                badge.innerText = `ID #${id} (Destroyed)`;
+                wrapper.appendChild(badge);
+            });
+        }
+
+        // Query External Github Repository Endpoint Mapping Parameters System
+        async function executeVerificationSearch() {
+            const inputVal = document.getElementById("searchInput").value;
+            if (inputVal === "") return;
+            const targetId = parseInt(inputVal);
+
+            if (targetId < 0 || targetId > 9999) {
+                triggerSystemBroadcast("Index Violation", "Token search inputs range boundary constraint exception triggers.", "Limit values matched.");
+                return;
+            }
+
+            const container = document.getElementById("searchOutcomeBox");
+            container.classList.remove("hidden");
+            
+            document.getElementById("searchResultImg").src = `${GITHUB_IMAGES_BASE}${targetId}.png`;
+            document.getElementById("searchResultName").innerText = `DarkPunk #${targetId.toString().padStart(4, '0')}`;
+            
+            // Dynamic Traits Simulation Parsing Fetch Mocking Layouts
+            const traitsBox = document.getElementById("searchTraitsList");
+            traitsBox.innerHTML = "<span class='text-xs text-neutral-500 font-medium'>Fetching asset traits mapping records...</span>";
+
+            try {
+                // Fetch direct from structural repository registries config paths
+                const response = await fetch(`https://raw.githubusercontent.com/darkpunksnft/darkpunksmetadata/main/metadata/${targetId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    traitsBox.innerHTML = "";
+                    if (data.attributes && data.attributes.length > 0) {
+                        data.attributes.forEach(attr => {
+                            const pill = document.createElement("span");
+                            pill.className = "bg-neutral-900 border border-neutral-800 text-[11px] text-neutral-300 px-2 py-0.5 uppercase tracking-wider font-bold";
+                            pill.innerText = `${attr.trait_type}: ${attr.value}`;
+                            traitsBox.appendChild(pill);
+                        });
+                    } else {
+                        traitsBox.innerHTML = "<span class='text-xs text-neutral-600'>No attribute variables found.</span>";
+                    }
+                } else {
+                    traitsBox.innerHTML = "<span class='text-xs text-neutral-600'>CryptoPunks standard alignment record mapping.</span>";
+                }
+            } catch (ex) {
+                traitsBox.innerHTML = "<span class='text-xs text-neutral-600'>Network error tracking attributes matrix.</span>";
+            }
+        }
+
+        // Framework Dynamic Indexing Grid Layout Frames Assembly System
+        function generateDynamicGalleryFrames() {
+            const grid = document.getElementById("galleryAssetGrid");
+            grid.innerHTML = "";
+
+            for (let i = 0; i < 24; i++) {
+                const cell = document.createElement("div");
+                cell.className = "bg-neutral-950 p-2 border border-neutral-900 relative cursor-pointer hover:border-neutral-500 transition-all group";
+                cell.setAttribute("data-token-id", i);
+                cell.onclick = () => launchAssetInspectorMatrix(i);
+
+                const img = document.createElement("img");
+                img.src = `${GITHUB_IMAGES_BASE}${i}.png`;
+                img.className = "w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all";
+                
+                const metaRow = document.createElement("div");
+                metaRow.className = "flex justify-between items-center text-[10px] text-neutral-500 mt-2 font-bold";
+                metaRow.innerHTML = `<span>ID #${i}</span><span class='text-[9px] text-neutral-700 uppercase'>Inspect</span>`;
+
+                cell.appendChild(img);
+                cell.appendChild(metaRow);
+                grid.appendChild(cell);
+            }
+        }
+
+        // Overprint Shadowed Mint Marks Stamp Rules Realtime Evaluation
+        function updateGalleryMintStampsVisibility() {
+            const cells = document.querySelectorAll("#galleryAssetGrid > div");
+            cells.forEach(cell => {
+                const id = parseInt(cell.getAttribute("data-token-id"));
+                // Clear any existing stamps
+                const existingStamp = cell.querySelector(".stamp-minted");
+                if (existingStamp) existingStamp.remove();
+
+                if (id < appState.currentTotalSupply) {
+                    cell.classList.add("brightness-50");
+                    const stamp = document.createElement("div");
+                    stamp.className = "stamp-minted";
+                    stamp.innerText = "Minted";
+                    cell.appendChild(stamp);
+                } else {
+                    cell.classList.remove("brightness-50");
+                }
+            });
+        }
+
+        // Attributes Dynamic Modal Focus Framework Handler Logic Block
+        async function launchAssetInspectorMatrix(tokenId) {
+            const pnl = document.getElementById("inspectDataModal");
+            pnl.classList.remove("hidden");
+            
+            document.getElementById("inspectModalImg").src = `${GITHUB_IMAGES_BASE}${tokenId}.png`;
+            document.getElementById("inspectModalTitle").innerText = `Structural Matrix Unit Identity Log: DarkPunk #${tokenId}`;
+            
+            const attrBox = document.getElementById("inspectAttributesBox");
+            attrBox.innerHTML = "<span class='text-xs text-neutral-600 font-mono'>Querying structural asset payload variables data stream...</span>";
+
+            try {
+                const response = await fetch(`https://raw.githubusercontent.com/darkpunksnft/darkpunksmetadata/main/metadata/${tokenId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    attrBox.innerHTML = "";
+                    data.attributes.forEach(a => {
+                        const chunk = document.createElement("div");
+                        chunk.className = "bg-neutral-900 border border-neutral-800 px-3 py-1 text-xs";
+                        chunk.innerHTML = `<span class='text-neutral-500 block text-[10px] uppercase font-bold'>${a.trait_type}</span><span class='text-white font-medium'>${a.value}</span>`;
+                        attrBox.appendChild(chunk);
+                    });
+                } else {
+                    attrBox.innerHTML = "<span class='text-xs text-neutral-600'>Fallback dataset indexing logs read mismatch.</span>";
+                }
+            } catch (err) {
+                attrBox.innerHTML = "<span class='text-xs text-neutral-600'>Unable to parse properties pipeline logs stream.</span>";
+            }
+            
+            // Scroll inspect context box smoothly into viewing ports layout bounds
+            pnl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
